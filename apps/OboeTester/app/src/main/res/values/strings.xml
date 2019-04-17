@@ -113,5 +113,6 @@
     <string name="auto_glitch_instructions">Use loopback adapter or speakers.</string>
     <string name="log_of_glitch_tests">Log of Glitch Tests</string>
     <string name="save_file">Save</string>
+    <string name="run_in_background">run in background</string>
 
 </resources>

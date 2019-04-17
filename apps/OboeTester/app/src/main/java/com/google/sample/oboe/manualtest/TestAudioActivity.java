@@ -42,11 +42,13 @@ abstract class TestAudioActivity extends Activity {
     public static final String TAG = "TestOboe";
 
     protected static final int FADER_THRESHOLD_MAX = 1000;
+
     public static final int STATE_OPEN = 0;
     public static final int STATE_STARTED = 1;
     public static final int STATE_PAUSED = 2;
     public static final int STATE_STOPPED = 3;
     public static final int STATE_CLOSED = 4;
+
     public static final int COLOR_ACTIVE = 0xFFD0D0A0;
     public static final int COLOR_IDLE = 0xFFD0D0D0;
 
@@ -72,6 +74,8 @@ abstract class TestAudioActivity extends Activity {
     private MyStreamSniffer mStreamSniffer;
     private CheckBox mCallbackReturnStopBox;
     private int mSampleRate;
+    private CheckBox mRunInBackgroundBox;
+    private static boolean mRunInBackground = false;
 
     public static class StreamContext {
         StreamConfigurationView configurationView;
@@ -146,6 +150,7 @@ abstract class TestAudioActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate() -------------------");
         inflateActivity();
         findAudioCommon();
     }
@@ -159,17 +164,55 @@ abstract class TestAudioActivity extends Activity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        Log.i(TAG, "onStart() entering mState = " + mState
+                + ", runInBackground = " + getRunInBackground());
+        mRunInBackgroundBox.setChecked(mRunInBackground);
+        if (mRunInBackground) {
+            if (mState != STATE_CLOSED) {
+                mStreamSniffer.startStreamSniffer();
+            }
+        }
+        Log.i(TAG, "onStart() leaving mState = " + mState
+                + ", runInBackground = " + getRunInBackground());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.i(TAG, "onResume() mState = " + mState
+                + ", runInBackground = " + getRunInBackground());
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.i(TAG, "onPause() mState = " + mState
+                + ", runInBackground = " + getRunInBackground());
+    }
+
+    @Override
     protected void onStop() {
-        Log.i(TAG, "onStop() called so stopping audio =========================");
-        stopAudio();
-        closeAudio();
+        mRunInBackground = getRunInBackground();
+        Log.i(TAG, "onStop() entering mState = " + mState
+                + ", runInBackground = " + getRunInBackground());
+        if (!getRunInBackground()) {
+            Log.i(TAG, "onStop() called so stopping audio =========================");
+            stopAudio();
+            closeAudio();
+        }
         super.onStop();
+        Log.i(TAG, "onStop() leaving mState = " + mState
+                + ", runInBackground = " + getRunInBackground());
     }
 
     @Override
     protected void onDestroy() {
         mState = STATE_CLOSED;
         super.onDestroy();
+        Log.i(TAG, "onDestroy() leaving mState = " + mState
+                + ", runInBackground = " + getRunInBackground());
     }
 
     int getState() {
@@ -276,7 +319,17 @@ abstract class TestAudioActivity extends Activity {
         }
         OboeAudioStream.setCallbackReturnStop(false);
 
+        mRunInBackgroundBox = (CheckBox) findViewById(R.id.run_in_background);
+
         mStreamSniffer = new MyStreamSniffer();
+    }
+
+    public boolean getRunInBackground() {
+        if (mRunInBackgroundBox != null) {
+            return mRunInBackgroundBox.isChecked();
+        } else {
+            return false;
+        }
     }
 
     private void queryNativeAudioParameters() {
