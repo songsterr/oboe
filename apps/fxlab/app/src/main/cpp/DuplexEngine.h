@@ -42,9 +42,9 @@ public:
 
 private:
 
-    void openInStream();
+    //void openInStream();
 
-    void openOutStream();
+    //void openOutStream();
 
     static oboe::AudioStreamBuilder defaultBuilder();
 
@@ -55,6 +55,10 @@ private:
     oboe::ManagedStream outStream;
 
 
+    void openInputStream();
+
+
+    void openOutputStream();
 };
 
 

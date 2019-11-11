@@ -36,6 +36,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.mobileer.androidfxlab.databinding.ActivityMainBinding
+import java.lang.annotation.Native
 
 
 class MainActivity : AppCompatActivity() {
@@ -114,31 +115,32 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.M)
     private fun handleMidiDevices() {
 
+        Log.d(TAG, "Setting up MIDI listener")
+
         val midiManager = getSystemService(Context.MIDI_SERVICE) as MidiManager
         midiManager.registerDeviceCallback(object : MidiManager.DeviceCallback() {
             override fun onDeviceAdded(device: MidiDeviceInfo) {
 
                 // open this device
-                /*
                 midiManager.openDevice(device, {
                     Log.d(TAG, "Opened MIDI device")
 
-                    val targetSeekBar = findViewById<SeekBar>(R.id.seekBar)
-                    if (targetSeekBar != null) {
+                    //val targetSeekBar = findViewById<SeekBar>(R.id.seekBar)
+                    //if (targetSeekBar != null) {
 
-                        val midiReceiver = MyMidiReceiver(targetSeekBar)
+                        val midiReceiver = MyMidiReceiver()
                         val outputPort = it.openOutputPort(0)
                         outputPort?.connect(midiReceiver)
-                    }
+                    //}
 
                 }, Handler())
-                 */
+
             }
         }, Handler())
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    class MyMidiReceiver(var seekBar: SeekBar) : MidiReceiver() {
+    class MyMidiReceiver() : MidiReceiver() {
 
         private val TAG: String = "MyMidiReceiver"
 
@@ -152,7 +154,10 @@ class MainActivity : AppCompatActivity() {
             val CONTROL_CHANGE_CH1 : Byte = 0xB0.toByte()
 
             if (data[offset] == CONTROL_CHANGE_CH1){
-                seekBar.progress = (data[offset+2].toInt() / 1.27).toInt()
+                // TODO: Wrap this in a countdown timer
+                NativeInterface.passMIDIvalue(data[offset+2].toInt() / 127.0F)
+
+                //seekBar.progress = (
             }
         }
     }

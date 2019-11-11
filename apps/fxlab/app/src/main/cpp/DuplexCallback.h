@@ -20,10 +20,67 @@
 
 
 
+class DuplexCallback : public oboe::AudioStreamCallback {
+
+
+
+
+public:
+
+    DuplexCallback(oboe::AudioStream &inStream,
+                   std::function<void(float *, float *)> fun,
+                   size_t buffer_size) :
+            kBufferSize(buffer_size), inRef(inStream), f(fun) {}
+
+    oboe::DataCallbackResult
+    onAudioReady(oboe::AudioStream *oboeStream, void *audioData, int32_t numFrames) override {
+
+        auto *outputData = static_cast<float *>(audioData);
+
+        std::fill(outputData, outputData + numFrames, 0);
+
+        if (inRef.getState() == oboe::StreamState::Started){
+
+            // TODO: clear down input stream before copying to output
+            oboe::ResultWithValue<int32_t> result = inRef.read(inputBuffer.get(), numFrames, 0);
+            int32_t framesRead = result.value();
+
+            // Clear down input stream
+            if (mSpinUpCallbacks > 0 && framesRead > 0){
+                mSpinUpCallbacks--;
+                return oboe::DataCallbackResult::Continue;
+            }
+
+            // Do processing
+            f(inputBuffer.get(), inputBuffer.get() + framesRead);
+
+            // Copy inputBuffer to output
+            for (int i = 0; i < numFrames; ++i) {
+                *outputData++ = inputBuffer[i];
+            }
+
+        }
+
+        return oboe::DataCallbackResult::Continue;
+    }
+
+private:
+    int mSpinUpCallbacks = 10; // We will let the streams sync for the first few valid frames
+    static constexpr size_t kChannelCount = 2;
+    const size_t kBufferSize;
+    oboe::AudioStream &inRef;
+    std::function<void(float *, float *)> f;
+    std::unique_ptr<float[]> inputBuffer = std::make_unique<float[]>(kBufferSize);
+
+
+};
+
+
 // This callback handles mono in, stereo out synchronized audio passthrough.
 // It takes a function which operates on two pointers (beginning and end)
 // of underlying data.
-
+// TODO: Make mono to mono
+/*
 class DuplexCallback : public oboe::AudioStreamCallback {
 public:
 
@@ -74,5 +131,5 @@ private:
     std::function<void(void)> restart;
     std::unique_ptr<float[]> inputBuffer = std::make_unique<float[]>(kBufferSize);
 };
-
+*/
 #endif //ANDROID_FXLAB_DUPLEXCALLBACK_H

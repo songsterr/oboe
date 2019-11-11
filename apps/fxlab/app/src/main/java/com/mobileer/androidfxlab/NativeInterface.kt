@@ -33,4 +33,6 @@ object NativeInterface {
 
     external fun enablePassthroughNative(enable: Boolean)
 
+    external fun passMIDIvalue(value: Float)
+
 }

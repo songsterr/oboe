@@ -17,28 +17,57 @@
 #include "DuplexEngine.h"
 #include "effects/Effects.h"
 
+using namespace oboe;
+
 DuplexEngine::DuplexEngine() {
     beginStreams();
 }
 
 void DuplexEngine::beginStreams() {
-    // This ordering is extremely important
+
+    openInputStream();
+
+    // TODO: Add slide on function list
+    // TODO: Try using Android Studio 4.0 for better C++ linting
+    // TODO: is there a way of refactoring out the lambda?
+    // TODO: try adding a more complicated effect
+
+    functionList.addEffect(EchoEffect<float *>(0.5, 250));
+
+    mCallback = std::make_unique<DuplexCallback>(*inStream,
+            [&functionList = this->functionList](float *begin, float *end){
+
+        functionList(begin, end);
+
+        return; }, inStream->getBufferCapacityInFrames());
+
+    openOutputStream();
+
+    startStreams();
+
+    /*// This ordering is extremely important
     openInStream();
     SAMPLE_RATE = inStream->getSampleRate();
     createCallback();
     functionList.addEffect(EchoEffect<float*>(0.5, 100));
     openOutStream();
     oboe::Result result = startStreams();
-    if (result != oboe::Result::OK) stopStreams();
+    if (result != oboe::Result::OK) stopStreams();*/
 }
 
 void DuplexEngine::createCallback() {
+
+
+
+
+    /*
+
     mCallback = std::make_unique<DuplexCallback>(
             *inStream, [&functionStack = this->functionList](float *beg, float *end) {
                 (functionStack)(beg, end);
             },
             inStream->getBufferCapacityInFrames(),
-            std::bind(&DuplexEngine::beginStreams, this));
+            std::bind(&DuplexEngine::beginStreams, this));*/
 }
 
 
@@ -48,6 +77,7 @@ oboe::AudioStreamBuilder DuplexEngine::defaultBuilder() {
             ->setSharingMode(oboe::SharingMode::Exclusive);
 }
 
+/*
 void DuplexEngine::openInStream() {
     defaultBuilder().setDirection(oboe::Direction::Input)
             ->setFormat(oboe::AudioFormat::Float) // For now
@@ -61,9 +91,13 @@ void DuplexEngine::openOutStream() {
             ->setFormat(inStream->getFormat())
             ->setChannelCount(2) // Stereo out
             ->openManagedStream(outStream);
-}
+}*/
 
 oboe::Result DuplexEngine::startStreams() {
+
+    // TODO: Why doesn't this stop the output stream because onAudioReady will return Stop if it can't read from the input stream
+    // TODO: Add slide about minimizing latency
+
     oboe::Result result = outStream->requestStart();
     int64_t timeoutNanos = 500 * 1000000; // arbitrary 1/2 second
     auto currentState = outStream->getState();
@@ -81,5 +115,23 @@ oboe::Result DuplexEngine::stopStreams() {
     oboe::Result inputResult = outStream->requestStop();
     if (outputResult != oboe::Result::OK) return outputResult;
     return inputResult;
+}
+
+void DuplexEngine::openInputStream() {
+
+    defaultBuilder().setDirection(Direction::Input)
+    ->setFormat(AudioFormat::Float)
+    ->setChannelCount(1)
+    ->openManagedStream(inStream);
+
+}
+
+void DuplexEngine::openOutputStream() {
+
+    defaultBuilder().setDirection(Direction::Output)
+    ->setCallback(mCallback.get())
+    ->setChannelCount(1)
+    ->setFormat(AudioFormat::Float)
+    ->openManagedStream(outStream);
 }
 
