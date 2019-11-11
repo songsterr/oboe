@@ -22,21 +22,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Main content -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/effect_list_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scrollbars="vertical"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floating_add_button"
+    <ToggleButton android:id="@+id/ToggleButton01"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
-        android:layout_margin="16dp"
-        app:srcCompat="@drawable/ic_add" />
+        android:textOff="Unmute"
+        android:textOn="Mute"/>
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

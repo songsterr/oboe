@@ -24,19 +24,18 @@
 // It takes a function which operates on two pointers (beginning and end)
 // of underlying data.
 
-template<class numeric_type>
 class DuplexCallback : public oboe::AudioStreamCallback {
 public:
 
     DuplexCallback(oboe::AudioStream &inStream,
-                   std::function<void(numeric_type *, numeric_type *)> fun,
+                   std::function<void(float *, float *)> fun,
                    size_t buffer_size, std::function<void(void)> restartFunction) :
             kBufferSize(buffer_size), inRef(inStream), f(fun), restart(restartFunction) {}
 
 
     oboe::DataCallbackResult
     onAudioReady(oboe::AudioStream *, void *audioData, int32_t numFrames) override {
-        auto *outputData = static_cast<numeric_type *>(audioData);
+        float *outputData = static_cast<float *>(audioData);
         // Silence first to simplify glitch detection
         std::fill(outputData, outputData + numFrames * kChannelCount, 0);
         oboe::ResultWithValue<int32_t> result = inRef.read(inputBuffer.get(), numFrames, 0);
@@ -71,9 +70,9 @@ private:
     static constexpr size_t kChannelCount = 2;
     const size_t kBufferSize;
     oboe::AudioStream &inRef;
-    std::function<void(numeric_type *, numeric_type *)> f;
+    std::function<void(float *, float *)> f;
     std::function<void(void)> restart;
-    std::unique_ptr<numeric_type[]> inputBuffer = std::make_unique<numeric_type[]>(kBufferSize);
+    std::unique_ptr<float[]> inputBuffer = std::make_unique<float[]>(kBufferSize);
 };
 
 #endif //ANDROID_FXLAB_DUPLEXCALLBACK_H

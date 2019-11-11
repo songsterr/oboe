@@ -26,10 +26,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
-import android.view.SubMenu
 import android.view.WindowManager
-import android.widget.PopupMenu
 import android.widget.SeekBar
+import android.widget.ToggleButton
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -37,7 +36,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.mobileer.androidfxlab.databinding.ActivityMainBinding
-import com.mobileer.androidfxlab.datatype.Effect
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -65,34 +64,10 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        binding.effectListView.adapter = EffectsAdapter
+        val tglbtn = findViewById<ToggleButton>(R.id.ToggleButton01)
 
-        binding.floatingAddButton.setOnClickListener { view ->
-            val popup = PopupMenu(this, view)
-            popup.menuInflater.inflate(R.menu.add_menu, popup.menu)
-            val menuMap = HashMap<String, SubMenu>()
-            for (effectName in NativeInterface.effectDescriptionMap.keys) {
-                val cat = NativeInterface.effectDescriptionMap.getValue(effectName).category
-                if (cat == "None") {
-                    popup.menu.add(effectName)
-                } else {
-                    val subMenu = menuMap[cat] ?: popup.menu.addSubMenu(cat)
-                    subMenu.add(effectName)
-                    menuMap[cat] = subMenu
-                }
-            }
-            popup.setOnMenuItemClickListener { menuItem ->
-                NativeInterface.effectDescriptionMap[menuItem.title]?.let {
-                    val toAdd = Effect(it)
-                    EffectsAdapter.effectList.add(toAdd)
-                    NativeInterface.addEffect(toAdd)
-                    EffectsAdapter.notifyItemInserted(EffectsAdapter.effectList.size - 1)
-                    true
-                }
-                false
-            }
-            popup.show()
-        }
+        tglbtn.setOnCheckedChangeListener { _, isChecked -> NativeInterface.enablePassthroughNative(isChecked) }
+
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
             handleMidiDevices()
         }
@@ -108,8 +83,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         NativeInterface.destroyAudioEngine()
-        EffectsAdapter.effectList.clear()
-        EffectsAdapter.notifyDataSetChanged()
         super.onPause()
     }
 
@@ -146,6 +119,7 @@ class MainActivity : AppCompatActivity() {
             override fun onDeviceAdded(device: MidiDeviceInfo) {
 
                 // open this device
+                /*
                 midiManager.openDevice(device, {
                     Log.d(TAG, "Opened MIDI device")
 
@@ -158,6 +132,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
                 }, Handler())
+                 */
             }
         }, Handler())
     }

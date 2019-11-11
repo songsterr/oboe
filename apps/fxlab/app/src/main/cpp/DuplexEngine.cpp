@@ -24,26 +24,18 @@ DuplexEngine::DuplexEngine() {
 void DuplexEngine::beginStreams() {
     // This ordering is extremely important
     openInStream();
-    if (inStream->getFormat() == oboe::AudioFormat::Float) {
-        functionList.emplace<FunctionList<float *>>();
-        createCallback<float_t>();
-    } else if (inStream->getFormat() == oboe::AudioFormat::I16) {
-        createCallback<int16_t>();
-    } else {
-        stopStreams();
-    }
     SAMPLE_RATE = inStream->getSampleRate();
+    createCallback();
+    functionList.addEffect(EchoEffect<float*>(0.5, 100));
     openOutStream();
-
     oboe::Result result = startStreams();
     if (result != oboe::Result::OK) stopStreams();
 }
 
-template<class numeric>
 void DuplexEngine::createCallback() {
-    mCallback = std::make_unique<DuplexCallback<numeric>>(
-            *inStream, [&functionStack = this->functionList](numeric *beg, numeric *end) {
-                std::get<FunctionList<numeric *>>(functionStack)(beg, end);
+    mCallback = std::make_unique<DuplexCallback>(
+            *inStream, [&functionStack = this->functionList](float *beg, float *end) {
+                (functionStack)(beg, end);
             },
             inStream->getBufferCapacityInFrames(),
             std::bind(&DuplexEngine::beginStreams, this));

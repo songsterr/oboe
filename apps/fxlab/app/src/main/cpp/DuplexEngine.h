@@ -38,9 +38,7 @@ public:
 
     oboe::Result stopStreams();
 
-
-    std::variant<FunctionList<int16_t *>, FunctionList<float *>> functionList{
-            std::in_place_type<FunctionList<int16_t *>>};
+    FunctionList<float*> functionList;
 
 private:
 
@@ -50,7 +48,6 @@ private:
 
     static oboe::AudioStreamBuilder defaultBuilder();
 
-    template<class numeric>
     void createCallback();
 
     oboe::ManagedStream inStream;
