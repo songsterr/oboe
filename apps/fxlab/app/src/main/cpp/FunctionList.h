@@ -22,6 +22,10 @@
 #include <functional>
 #include <array>
 
+/**
+ * Container for functions, executed sequentially
+ * @tparam iter_type
+ */
 template<class iter_type>
 class FunctionList {
     std::vector<std::pair<std::function<void(iter_type, iter_type)>, bool>> functionList;

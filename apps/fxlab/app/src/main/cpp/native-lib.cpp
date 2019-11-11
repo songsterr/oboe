@@ -87,6 +87,7 @@ Java_com_mobileer_androidfxlab_NativeInterface_addDefaultEffectNative(JNIEnv *, 
     if (!enginePtr) return;
     auto id = static_cast<int>(jid);
 
+    // TODO: simplify
     std::visit([id](auto &&stack) {
         std::function<void(decltype(stack.getType()), decltype(stack.getType()))> f;
         int i = 0;

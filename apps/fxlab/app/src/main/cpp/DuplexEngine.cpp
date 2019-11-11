@@ -17,11 +17,26 @@
 #include "DuplexEngine.h"
 #include "effects/Effects.h"
 
+using namespace oboe;
+
 DuplexEngine::DuplexEngine() {
-    beginStreams();
+    streamSetup();
 }
 
-void DuplexEngine::beginStreams() {
+/**
+ * TODO: Remove multiple data types
+ */
+void DuplexEngine::streamSetup() {
+
+    // Make sure you check the result in production code
+    // e.g. can't access microphone on phone, might want to display a Toast to user
+    openInStream();
+    createCallback<float_t>();
+    openOutStream();
+    startStreams();
+
+
+    /*
     // This ordering is extremely important
     openInStream();
     if (inStream->getFormat() == oboe::AudioFormat::Float) {
@@ -36,17 +51,23 @@ void DuplexEngine::beginStreams() {
     openOutStream();
 
     oboe::Result result = startStreams();
-    if (result != oboe::Result::OK) stopStreams();
+    if (result != oboe::Result::OK) stopStreams();*/
 }
 
 template<class numeric>
 void DuplexEngine::createCallback() {
+
+    // TODO: remove weird function stuff, creating a callback with the input stream
+    //
+    EchoEffect e(0.5, 500);
+    // TODO: fix this this->functionList.addEffect<>(e)
+
     mCallback = std::make_unique<DuplexCallback<numeric>>(
             *inStream, [&functionStack = this->functionList](numeric *beg, numeric *end) {
                 std::get<FunctionList<numeric *>>(functionStack)(beg, end);
             },
             inStream->getBufferCapacityInFrames(),
-            std::bind(&DuplexEngine::beginStreams, this));
+            std::bind(&DuplexEngine::streamSetup, this));
 }
 
 
@@ -56,20 +77,22 @@ oboe::AudioStreamBuilder DuplexEngine::defaultBuilder() {
             ->setSharingMode(oboe::SharingMode::Exclusive);
 }
 
+/*
 void DuplexEngine::openInStream() {
     defaultBuilder().setDirection(oboe::Direction::Input)
             ->setFormat(oboe::AudioFormat::Float) // For now
             ->setChannelCount(1) // Mono in for effects processing
             ->openManagedStream(inStream);
-}
+}*/
 
+/*
 void DuplexEngine::openOutStream() {
     defaultBuilder().setCallback(mCallback.get())
             ->setSampleRate(inStream->getSampleRate())
             ->setFormat(inStream->getFormat())
             ->setChannelCount(2) // Stereo out
             ->openManagedStream(outStream);
-}
+}*/
 
 oboe::Result DuplexEngine::startStreams() {
     oboe::Result result = outStream->requestStart();
@@ -89,5 +112,40 @@ oboe::Result DuplexEngine::stopStreams() {
     oboe::Result inputResult = outStream->requestStop();
     if (outputResult != oboe::Result::OK) return outputResult;
     return inputResult;
+}
+
+Result DuplexEngine::openInStream() {
+
+    /*
+     * .setDirection(oboe::Direction::Input)
+            ->setFormat(oboe::AudioFormat::Float) // For now
+            ->setChannelCount(1) // Mono in for effects processing
+            ->openManagedStream(inStream);
+     */
+
+    return defaultBuilder().setDirection(Direction::Input)
+    ->setFormat(AudioFormat::Float)
+    ->setChannelCount(1)
+    ->openManagedStream(inStream);
+
+}
+
+Result DuplexEngine::openOutStream() {
+
+    /*defaultBuilder().setCallback(mCallback.get())
+            ->setSampleRate(inStream->getSampleRate())
+            ->setFormat(inStream->getFormat())
+            ->setChannelCount(2) // Stereo out
+            ->openManagedStream(outStream);
+
+            *?
+            *
+            */
+    return defaultBuilder().setCallback(mCallback.get())
+    ->setSampleRate(inStream->getSampleRate())
+    ->setFormat(inStream->getFormat())
+    ->setChannelCount(2)// might be worth calling out that we don't need this because Oboe will handle the conversion for us
+    ->openManagedStream(outStream);
+
 }
 

@@ -25,12 +25,13 @@
 #include "FunctionList.h"
 #include "DuplexCallback.h"
 
+using namespace oboe;
 
 class DuplexEngine {
 public:
     DuplexEngine();
 
-    void beginStreams();
+    void streamSetup();
 
     virtual ~DuplexEngine() = default;
 
@@ -44,9 +45,9 @@ public:
 
 private:
 
-    void openInStream();
+    //void openInStream();
 
-    void openOutStream();
+    //void openOutStream();
 
     static oboe::AudioStreamBuilder defaultBuilder();
 
@@ -58,6 +59,9 @@ private:
     oboe::ManagedStream outStream;
 
 
+    Result openInStream();
+
+    Result openOutStream();
 };
 
 
