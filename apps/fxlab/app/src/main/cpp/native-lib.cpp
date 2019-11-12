@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "DuplexEngine.h"
-#include "effects/Effects.h"
+#include "effects/EchoEffect.h"
 #include "FunctionList.h"
 
 

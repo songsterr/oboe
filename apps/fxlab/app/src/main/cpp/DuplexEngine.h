@@ -30,7 +30,7 @@ class DuplexEngine {
 public:
     DuplexEngine();
 
-    void beginStreams();
+    void setupStreams();
 
     virtual ~DuplexEngine() = default;
 

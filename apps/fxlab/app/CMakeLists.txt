@@ -30,7 +30,8 @@ add_library( # Sets the name of the library.
 if(MSVC)
     target_compile_options(native-lib PRIVATE /W4 /WX)
 else()
-    target_compile_options(native-lib PRIVATE -Wall -Wextra -pedantic)
+    #target_compile_options(native-lib PRIVATE -Wall -Wextra -pedantic)
+    target_compile_options(native-lib PRIVATE )
 endif()
 
 target_compile_options(native-lib PRIVATE -Ofast)

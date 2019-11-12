@@ -19,6 +19,7 @@
 #include "DelayLineEffect.h"
 #include "utils/WhiteNoise.h"
 
+static int SAMPLE_RATE = 48000;
 
 template <class iter_type>
 class EchoEffect: public DelayLineEffect<iter_type> {
