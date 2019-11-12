@@ -25,6 +25,7 @@
 #include "FunctionList.h"
 #include "DuplexCallback.h"
 
+using namespace oboe;
 
 class DuplexEngine {
 public:
@@ -44,10 +45,16 @@ private:
 
     static oboe::AudioStreamBuilder defaultBuilder();
 
-    oboe::ManagedStream inStream;
-    std::unique_ptr<oboe::AudioStreamCallback> mCallback;
-    oboe::ManagedStream outStream;
+    oboe::ManagedStream outputStream;
 
+    void openInputStream();
+
+    void createCallback();
+
+    std::unique_ptr<AudioStreamCallback, std::default_delete<AudioStreamCallback>> mCallback;
+    ManagedStream inputStream;
+
+    void openOutputStream();
 };
 
 

@@ -18,34 +18,66 @@
 //#include "effects/Effects.h"
 #include "effects/EchoEffect.h"
 
-using namespace oboe;
-
 DuplexEngine::DuplexEngine() {
     setupStreams();
 }
 
 void DuplexEngine::setupStreams() {
 
-    
+    openInputStream();
+
+    mCallback = std::make_unique<DuplexCallback>(
+            inputStream,
+            [](float *begin, float *end){},
+            inputStream->getBufferCapacityInFrames());
+
+    openOutputStream();
+    startStreams();
+
 }
 
 
 oboe::AudioStreamBuilder DuplexEngine::defaultBuilder() {
     return *oboe::AudioStreamBuilder()
             .setPerformanceMode(oboe::PerformanceMode::LowLatency)
-            ->setSharingMode(oboe::SharingMode::Exclusive);
+            ->setSharingMode(oboe::SharingMode::Exclusive)
+            ->setSampleRateConversionQuality(SampleRateConversionQuality::Medium)
+            ->setChannelConversionAllowed(true)
+            ->setFormatConversionAllowed(true);
 }
 
 oboe::Result DuplexEngine::startStreams() {
-    auto result = inStream->requestStart();
-    if (result == oboe::Result::OK) result = outStream->requestStart();
+    auto result = inputStream->requestStart();
+    if (result == oboe::Result::OK) result = outputStream->requestStart();
     if (result != oboe::Result::OK) stopStreams();
     return result;
 }
 
 oboe::Result DuplexEngine::stopStreams() {
-    oboe::Result outputResult = inStream->requestStop();
-    oboe::Result inputResult = outStream->requestStop();
+    oboe::Result outputResult = inputStream->requestStop();
+    oboe::Result inputResult = outputStream->requestStop();
     if (outputResult != oboe::Result::OK) return outputResult;
     return inputResult;
+}
+
+void DuplexEngine::openInputStream() {
+
+    defaultBuilder().setDirection(Direction::Input)
+    ->setChannelCount(1)
+    ->setFormat(AudioFormat::Float)
+    ->setSampleRate(48000)
+    ->openManagedStream(inputStream);
+
+
+}
+
+void DuplexEngine::openOutputStream() {
+
+    defaultBuilder().setDirection(Direction::Output)
+    ->setCallback(mCallback.get())
+    ->setChannelCount(1)
+    ->setFormat(AudioFormat::Float)
+    ->setSampleRate(48000)
+    ->openManagedStream(outputStream);
+
 }

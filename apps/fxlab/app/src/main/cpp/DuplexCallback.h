@@ -18,17 +18,39 @@
 
 #include <oboe/Oboe.h>
 
+using namespace oboe;
 
 class DuplexCallback : public oboe::AudioStreamCallback {
 public:
 
-    DuplexCallback(oboe::AudioStream &inStream,
+    DuplexCallback(oboe::ManagedStream &inputStream,
                    std::function<void(float *, float *)> fun,
                    size_t buffer_size) :
-            kBufferSize(buffer_size), inputStream(inStream), f(fun) {}
+            kBufferSize(buffer_size), mInputStream(inputStream), processingFunction(fun) {}
 
     oboe::DataCallbackResult
     onAudioReady(oboe::AudioStream *, void *audioData, int32_t numFrames) override {
+
+        auto *outputData = static_cast<float *>(audioData);
+        std::fill(outputData, outputData+numFrames, 0);
+
+        if (mInputStream->getState() == StreamState::Started){
+
+            if (mSpinUpCallbacks > 0){
+                mInputStream->read(inputBuffer.get(), mInputStream->getAvailableFrames().value()-numFrames, 0);
+                mSpinUpCallbacks--;
+            }
+
+            auto result = mInputStream->read(inputBuffer.get(), numFrames, 0);
+            if (result != Result::OK){
+                return DataCallbackResult::Stop;
+            }
+
+            auto end = inputBuffer.get()+result.value();
+            processingFunction(inputBuffer.get(), end);
+
+            std::copy(inputBuffer.get(), end, outputData);
+        }
 
         return oboe::DataCallbackResult::Continue;
     }
@@ -36,8 +58,8 @@ public:
 private:
     int mSpinUpCallbacks = 10; // We will let the streams sync for the first few valid frames
     const size_t kBufferSize;
-    oboe::AudioStream &inputStream;
-    std::function<void(float *, float *)> f;
+    oboe::ManagedStream &mInputStream;
+    std::function<void(float *, float *)> processingFunction;
     std::unique_ptr<float[]> inputBuffer = std::make_unique<float[]>(kBufferSize);
 
 
