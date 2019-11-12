@@ -42,23 +42,12 @@ public:
 
 private:
 
-    //void openInStream();
-
-    //void openOutStream();
-
     static oboe::AudioStreamBuilder defaultBuilder();
-
-    //void createCallback();
 
     oboe::ManagedStream inStream;
     std::unique_ptr<oboe::AudioStreamCallback> mCallback;
     oboe::ManagedStream outStream;
 
-
-    void openInputStream();
-
-
-    void openOutputStream();
 };
 
 
