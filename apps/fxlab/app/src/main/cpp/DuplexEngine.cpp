@@ -18,68 +18,7 @@
 #include "effects/EchoEffect.h"
 
 DuplexEngine::DuplexEngine() {
-    setupStreams();
+
+    // TODO
 }
 
-void DuplexEngine::setupStreams() {
-
-    openInputStream();
-
-    functionList.addEffect(EchoEffect(0.5, 400));
-
-    mCallback = std::make_unique<DuplexCallback>(
-            inputStream,
-            [this](float *begin, float *end){
-                this->functionList(begin, end);
-                },
-            inputStream->getBufferCapacityInFrames());
-
-    openOutputStream();
-    startStreams();
-}
-
-oboe::AudioStreamBuilder DuplexEngine::defaultBuilder() {
-
-    return *oboe::AudioStreamBuilder()
-            .setPerformanceMode(oboe::PerformanceMode::LowLatency)
-            ->setSharingMode(oboe::SharingMode::Exclusive)
-            ->setSampleRateConversionQuality(SampleRateConversionQuality::Medium)
-            ->setChannelConversionAllowed(true)
-            ->setFormatConversionAllowed(true);
-}
-
-oboe::Result DuplexEngine::startStreams() {
-    auto result = inputStream->requestStart();
-    if (result == oboe::Result::OK) result = outputStream->requestStart();
-    if (result != oboe::Result::OK) stopStreams();
-    return result;
-}
-
-oboe::Result DuplexEngine::stopStreams() {
-    oboe::Result outputResult = inputStream->requestStop();
-    oboe::Result inputResult = outputStream->requestStop();
-    if (outputResult != oboe::Result::OK) return outputResult;
-    return inputResult;
-}
-
-void DuplexEngine::openInputStream() {
-
-    defaultBuilder().setDirection(Direction::Input)
-    ->setChannelCount(1)
-    ->setFormat(AudioFormat::Float)
-    ->setSampleRate(48000)
-    ->openManagedStream(inputStream);
-
-
-}
-
-void DuplexEngine::openOutputStream() {
-
-    defaultBuilder().setDirection(Direction::Output)
-    ->setCallback(mCallback.get())
-    ->setChannelCount(1)
-    ->setFormat(AudioFormat::Float)
-    ->setSampleRate(48000)
-    ->openManagedStream(outputStream);
-
-}

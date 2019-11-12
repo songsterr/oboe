@@ -31,28 +31,10 @@ class DuplexEngine {
 public:
     DuplexEngine();
 
-    void setupStreams();
-
-    virtual ~DuplexEngine() = default;
-
-    oboe::Result startStreams();
-
-    oboe::Result stopStreams();
-
     FunctionList functionList;
 
 private:
 
-    static AudioStreamBuilder defaultBuilder();
-
-    oboe::ManagedStream outputStream;
-
-    void openInputStream();
-
-    std::unique_ptr<AudioStreamCallback, std::default_delete<AudioStreamCallback>> mCallback;
-    ManagedStream inputStream;
-
-    void openOutputStream();
 };
 
 

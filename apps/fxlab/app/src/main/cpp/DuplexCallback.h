@@ -33,28 +33,8 @@ public:
     oboe::DataCallbackResult
     onAudioReady(oboe::AudioStream *, void *audioData, int32_t numFrames) override {
 
-        auto *outputData = static_cast<float *>(audioData);
-        std::fill(outputData, outputData+numFrames, 0);
+        // TODO
 
-        if (mInputStream->getState() == StreamState::Started){
-
-            if (mSpinUpCallbacks > 0){
-                mInputStream->read(mInputBuffer.get(), mInputStream->getAvailableFrames().value()-numFrames, 0);
-                mSpinUpCallbacks--;
-            }
-
-            auto result = mInputStream->read(mInputBuffer.get(), numFrames, 0);
-            if (result != Result::OK){
-                return DataCallbackResult::Stop;
-            }
-
-            auto end = mInputBuffer.get()+result.value();
-            mProcessingFunction(mInputBuffer.get(), end);
-
-            std::copy(mInputBuffer.get(), end, outputData);
-        }
-
-        return oboe::DataCallbackResult::Continue;
     }
 
 private:
