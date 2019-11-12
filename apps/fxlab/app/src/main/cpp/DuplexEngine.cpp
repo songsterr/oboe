@@ -26,6 +26,7 @@ DuplexEngine::DuplexEngine() {
 void DuplexEngine::beginStreams() {
 
     openInputStream();
+    SAMPLE_RATE = inStream->getSampleRate();
 
     // TODO: Add slide on function list
     // TODO: Try using Android Studio 4.0 for better C++ linting
@@ -35,11 +36,8 @@ void DuplexEngine::beginStreams() {
     functionList.addEffect(EchoEffect<float *>(0.5, 250));
 
     mCallback = std::make_unique<DuplexCallback>(*inStream,
-            [&functionList = this->functionList](float *begin, float *end){
-
-        functionList(begin, end);
-
-        return; }, inStream->getBufferCapacityInFrames());
+            [this](float *begin, float *end){functionList(begin, end);},
+        inStream->getBufferCapacityInFrames());
 
     openOutputStream();
 
@@ -55,21 +53,6 @@ void DuplexEngine::beginStreams() {
     if (result != oboe::Result::OK) stopStreams();*/
 }
 
-void DuplexEngine::createCallback() {
-
-
-
-
-    /*
-
-    mCallback = std::make_unique<DuplexCallback>(
-            *inStream, [&functionStack = this->functionList](float *beg, float *end) {
-                (functionStack)(beg, end);
-            },
-            inStream->getBufferCapacityInFrames(),
-            std::bind(&DuplexEngine::beginStreams, this));*/
-}
-
 
 oboe::AudioStreamBuilder DuplexEngine::defaultBuilder() {
     return *oboe::AudioStreamBuilder()
@@ -77,37 +60,13 @@ oboe::AudioStreamBuilder DuplexEngine::defaultBuilder() {
             ->setSharingMode(oboe::SharingMode::Exclusive);
 }
 
-/*
-void DuplexEngine::openInStream() {
-    defaultBuilder().setDirection(oboe::Direction::Input)
-            ->setFormat(oboe::AudioFormat::Float) // For now
-            ->setChannelCount(1) // Mono in for effects processing
-            ->openManagedStream(inStream);
-}
-
-void DuplexEngine::openOutStream() {
-    defaultBuilder().setCallback(mCallback.get())
-            ->setSampleRate(inStream->getSampleRate())
-            ->setFormat(inStream->getFormat())
-            ->setChannelCount(2) // Stereo out
-            ->openManagedStream(outStream);
-}*/
-
 oboe::Result DuplexEngine::startStreams() {
-
-    // TODO: Why doesn't this stop the output stream because onAudioReady will return Stop if it can't read from the input stream
+    auto result = inStream->requestStart();
+    if (result == oboe::Result::OK) result = outStream->requestStart();
+    if (result != oboe::Result::OK) stopStreams();
+    return result;
     // TODO: Add slide about minimizing latency
 
-    oboe::Result result = outStream->requestStart();
-    int64_t timeoutNanos = 500 * 1000000; // arbitrary 1/2 second
-    auto currentState = outStream->getState();
-    auto nextState = oboe::StreamState::Unknown;
-    while (result == oboe::Result::OK && currentState != oboe::StreamState::Started) {
-        result = outStream->waitForStateChange(currentState, &nextState, timeoutNanos);
-        currentState = nextState;
-    }
-    if (result != oboe::Result::OK) return result;
-    return inStream->requestStart();
 }
 
 oboe::Result DuplexEngine::stopStreams() {
@@ -135,3 +94,35 @@ void DuplexEngine::openOutputStream() {
     ->openManagedStream(outStream);
 }
 
+/*
+void DuplexEngine::createCallback() {
+
+
+
+
+
+
+    mCallback = std::make_unique<DuplexCallback>(
+            *inStream, [&functionStack = this->functionList](float *beg, float *end) {
+                (functionStack)(beg, end);
+            },
+            inStream->getBufferCapacityInFrames(),
+            std::bind(&DuplexEngine::beginStreams, this));
+}
+*/
+
+/*
+void DuplexEngine::openInStream() {
+    defaultBuilder().setDirection(oboe::Direction::Input)
+            ->setFormat(oboe::AudioFormat::Float) // For now
+            ->setChannelCount(1) // Mono in for effects processing
+            ->openManagedStream(inStream);
+}
+
+void DuplexEngine::openOutStream() {
+    defaultBuilder().setCallback(mCallback.get())
+            ->setSampleRate(inStream->getSampleRate())
+            ->setFormat(inStream->getFormat())
+            ->setChannelCount(2) // Stereo out
+            ->openManagedStream(outStream);
+}*/

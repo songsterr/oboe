@@ -30,45 +30,47 @@ public:
     DuplexCallback(oboe::AudioStream &inStream,
                    std::function<void(float *, float *)> fun,
                    size_t buffer_size) :
-            kBufferSize(buffer_size), inRef(inStream), f(fun) {}
+            kBufferSize(buffer_size), inputStream(inStream), f(fun) {}
 
     oboe::DataCallbackResult
-    onAudioReady(oboe::AudioStream *oboeStream, void *audioData, int32_t numFrames) override {
+    onAudioReady(oboe::AudioStream *, void *audioData, int32_t numFrames) override {
 
         auto *outputData = static_cast<float *>(audioData);
 
         std::fill(outputData, outputData + numFrames, 0);
 
-        if (inRef.getState() == oboe::StreamState::Started){
+        if (inputStream.getState() == oboe::StreamState::Started) {
 
-            // TODO: clear down input stream before copying to output
-            oboe::ResultWithValue<int32_t> result = inRef.read(inputBuffer.get(), numFrames, 0);
-            int32_t framesRead = result.value();
+            oboe::ResultWithValue<int32_t> result = inputStream.read(inputBuffer.get(), numFrames, 0);
 
-            // Clear down input stream
-            if (mSpinUpCallbacks > 0 && framesRead > 0){
-                mSpinUpCallbacks--;
-                return oboe::DataCallbackResult::Continue;
+            if (mSpinUpCallbacks > 0) {
+                // Drain the input.
+                int32_t totalFramesRead = 0;
+                while (true) {
+                    oboe::ResultWithValue result = inputStream.read(inputBuffer.get(),
+                            numFrames,
+                            0 /* timeout */);
+                    if (result.value() == 0 || result.error() != oboe::Result::OK) break;
+                }
+                // Only counts if we actually got some data.
+                if (totalFramesRead > 0) {
+                    mSpinUpCallbacks--;
+                }
+
+            } else {
+                if (result.error() != oboe::Result::OK) return oboe::DataCallbackResult::Stop;
+                auto end = inputBuffer.get() + result.value();
+                f(inputBuffer.get(), end);
+                std::copy(inputBuffer.get(), end, outputData);
             }
-
-            // Do processing
-            f(inputBuffer.get(), inputBuffer.get() + framesRead);
-
-            // Copy inputBuffer to output
-            for (int i = 0; i < numFrames; ++i) {
-                *outputData++ = inputBuffer[i];
-            }
-
         }
-
         return oboe::DataCallbackResult::Continue;
     }
 
 private:
     int mSpinUpCallbacks = 10; // We will let the streams sync for the first few valid frames
-    static constexpr size_t kChannelCount = 2;
     const size_t kBufferSize;
-    oboe::AudioStream &inRef;
+    oboe::AudioStream &inputStream;
     std::function<void(float *, float *)> f;
     std::unique_ptr<float[]> inputBuffer = std::make_unique<float[]>(kBufferSize);
 
@@ -79,7 +81,6 @@ private:
 // This callback handles mono in, stereo out synchronized audio passthrough.
 // It takes a function which operates on two pointers (beginning and end)
 // of underlying data.
-// TODO: Make mono to mono
 /*
 class DuplexCallback : public oboe::AudioStreamCallback {
 public:
@@ -87,7 +88,7 @@ public:
     DuplexCallback(oboe::AudioStream &inStream,
                    std::function<void(float *, float *)> fun,
                    size_t buffer_size, std::function<void(void)> restartFunction) :
-            kBufferSize(buffer_size), inRef(inStream), f(fun), restart(restartFunction) {}
+            kBufferSize(buffer_size), inputStream(inStream), f(fun), restart(restartFunction) {}
 
 
     oboe::DataCallbackResult
@@ -95,10 +96,10 @@ public:
         float *outputData = static_cast<float *>(audioData);
         // Silence first to simplify glitch detection
         std::fill(outputData, outputData + numFrames * kChannelCount, 0);
-        oboe::ResultWithValue<int32_t> result = inRef.read(inputBuffer.get(), numFrames, 0);
+        oboe::ResultWithValue<int32_t> result = inputStream.read(inputBuffer.get(), numFrames, 0);
         int32_t framesRead = result.value();
         if (!result) {
-            inRef.requestStop();
+            inputStream.requestStop();
             return oboe::DataCallbackResult::Stop;
         }
         if (mSpinUpCallbacks > 0 && framesRead > 0) {
@@ -115,7 +116,7 @@ public:
     }
 
     void onErrorAfterClose(oboe::AudioStream *, oboe::Result result) override {
-        inRef.close();
+        inputStream.close();
         if (result == oboe::Result::ErrorDisconnected) {
             restart();
         }
@@ -126,7 +127,7 @@ private:
     int mSpinUpCallbacks = 10; // We will let the streams sync for the first few valid frames
     static constexpr size_t kChannelCount = 2;
     const size_t kBufferSize;
-    oboe::AudioStream &inRef;
+    oboe::AudioStream &inputStream;
     std::function<void(float *, float *)> f;
     std::function<void(void)> restart;
     std::unique_ptr<float[]> inputBuffer = std::make_unique<float[]>(kBufferSize);

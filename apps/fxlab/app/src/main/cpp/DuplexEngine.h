@@ -48,7 +48,7 @@ private:
 
     static oboe::AudioStreamBuilder defaultBuilder();
 
-    void createCallback();
+    //void createCallback();
 
     oboe::ManagedStream inStream;
     std::unique_ptr<oboe::AudioStreamCallback> mCallback;
