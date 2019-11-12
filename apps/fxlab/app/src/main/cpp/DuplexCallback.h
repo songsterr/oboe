@@ -24,9 +24,11 @@ class DuplexCallback : public oboe::AudioStreamCallback {
 public:
 
     DuplexCallback(oboe::ManagedStream &inputStream,
-                   std::function<void(float *, float *)> fun,
-                   size_t buffer_size) :
-            kBufferSize(buffer_size), mInputStream(inputStream), processingFunction(fun) {}
+                   std::function<void(float *, float *)> processingFunction,
+                   size_t bufferSize) :
+            kBufferSize(bufferSize),
+            mInputStream(inputStream),
+            mProcessingFunction(processingFunction) {}
 
     oboe::DataCallbackResult
     onAudioReady(oboe::AudioStream *, void *audioData, int32_t numFrames) override {
@@ -37,19 +39,19 @@ public:
         if (mInputStream->getState() == StreamState::Started){
 
             if (mSpinUpCallbacks > 0){
-                mInputStream->read(inputBuffer.get(), mInputStream->getAvailableFrames().value()-numFrames, 0);
+                mInputStream->read(mInputBuffer.get(), mInputStream->getAvailableFrames().value()-numFrames, 0);
                 mSpinUpCallbacks--;
             }
 
-            auto result = mInputStream->read(inputBuffer.get(), numFrames, 0);
+            auto result = mInputStream->read(mInputBuffer.get(), numFrames, 0);
             if (result != Result::OK){
                 return DataCallbackResult::Stop;
             }
 
-            auto end = inputBuffer.get()+result.value();
-            processingFunction(inputBuffer.get(), end);
+            auto end = mInputBuffer.get()+result.value();
+            mProcessingFunction(mInputBuffer.get(), end);
 
-            std::copy(inputBuffer.get(), end, outputData);
+            std::copy(mInputBuffer.get(), end, outputData);
         }
 
         return oboe::DataCallbackResult::Continue;
@@ -59,8 +61,8 @@ private:
     int mSpinUpCallbacks = 10; // We will let the streams sync for the first few valid frames
     const size_t kBufferSize;
     oboe::ManagedStream &mInputStream;
-    std::function<void(float *, float *)> processingFunction;
-    std::unique_ptr<float[]> inputBuffer = std::make_unique<float[]>(kBufferSize);
+    std::function<void(float *, float *)> mProcessingFunction;
+    std::unique_ptr<float[]> mInputBuffer = std::make_unique<float[]>(kBufferSize);
 
 
 };

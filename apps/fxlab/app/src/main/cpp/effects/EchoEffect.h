@@ -21,11 +21,10 @@
 
 static int SAMPLE_RATE = 48000;
 
-template <class iter_type>
-class EchoEffect: public DelayLineEffect<iter_type> {
+class EchoEffect: public DelayLineEffect<float *> {
 public:
     EchoEffect(float feedback, float delay_ms):
-        DelayLineEffect<iter_type> {1, 0, feedback,
+        DelayLineEffect<float *> {1, 0, feedback,
             static_cast<int>(delay_ms * SAMPLE_RATE / 1000),
             0,
             std::function<float()>{[](){return 0.0;}}}

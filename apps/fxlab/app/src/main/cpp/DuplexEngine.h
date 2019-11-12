@@ -39,17 +39,15 @@ public:
 
     oboe::Result stopStreams();
 
-    FunctionList<float*> functionList;
+    FunctionList functionList;
 
 private:
 
-    static oboe::AudioStreamBuilder defaultBuilder();
+    static AudioStreamBuilder defaultBuilder();
 
     oboe::ManagedStream outputStream;
 
     void openInputStream();
-
-    void createCallback();
 
     std::unique_ptr<AudioStreamCallback, std::default_delete<AudioStreamCallback>> mCallback;
     ManagedStream inputStream;

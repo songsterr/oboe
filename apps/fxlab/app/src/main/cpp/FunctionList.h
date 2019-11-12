@@ -22,28 +22,23 @@
 #include <functional>
 #include <array>
 
-template<class iter_type>
 class FunctionList {
-    std::vector<std::pair<std::function<void(iter_type, iter_type)>, bool>> functionList;
-    bool muted = false;
+    std::vector<std::function<void(float *, float *)>> functionList;
 public:
     FunctionList() = default;
-
     FunctionList(const FunctionList &) = delete;
-
     FunctionList &operator=(const FunctionList &) = delete;
 
+    void addEffect(std::function<void(float *, float *)> f) {
+        functionList.emplace_back(std::move(f));
+    }
 
-    void operator()(iter_type begin, iter_type end) {
+    void operator()(float * begin, float * end) {
         for (auto &f : functionList) {
-            if (f.second == true) std::get<0>(f)(begin, end);
+            f(begin, end);
         }
-        if (muted) std::fill(begin, end, 0);
     }
 
-    void addEffect(std::function<void(iter_type, iter_type)> f) {
-        functionList.emplace_back(std::move(f), true);
-    }
 
     void removeEffectAt(unsigned int index) {
         if (index < functionList.size()) {
@@ -63,20 +58,8 @@ public:
         }
     }
 
-    void modifyEffectAt(size_t index, std::function<void(iter_type, iter_type)> fun) {
-        functionList[index] = {std::move(fun), functionList[index].second};
-    }
-
-    void enableEffectAt(size_t index, bool enable) {
-        functionList[index].second = enable;
-    }
-
-    void mute(bool toMute) {
-        muted = toMute;
-    }
-
-    auto getType() {
-        return iter_type();
+    void modifyEffectAt(size_t index, std::function<void(float *, float *)> fun) {
+        functionList[index] = {std::move(fun)};
     }
 
 };

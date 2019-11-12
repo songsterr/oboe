@@ -47,7 +47,6 @@ class MainActivity : AppCompatActivity() {
 
     val MY_PERMISSIONS_RECORD_AUDIO = 17
 
-    @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -69,7 +68,12 @@ class MainActivity : AppCompatActivity() {
 
         tglbtn.setOnCheckedChangeListener { _, isChecked -> NativeInterface.enablePassthroughNative(isChecked) }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            handleMidiDevices()
+        }
+
     }
+
     override fun onResume() {
         super.onResume()
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
@@ -108,4 +112,42 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun handleMidiDevices() {
+        val midiManager = getSystemService(Context.MIDI_SERVICE) as MidiManager
+        midiManager.registerDeviceCallback(object: MidiManager.DeviceCallback(){
+
+            override fun onDeviceAdded(device: MidiDeviceInfo?) {
+                midiManager.openDevice(device, {
+                    val midiReceiver = MyMidiReceiver()
+                    val outputPort = it.openOutputPort(0)
+                    outputPort?.connect(midiReceiver)
+                }, Handler())
+            }
+        }, Handler())
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    class MyMidiReceiver : MidiReceiver() {
+        private val TAG: String = "MyMidiReceiver"
+
+        override fun onSend(data: ByteArray?, offset: Int, count: Int, timestamp: Long) {
+
+            Log.d(TAG, "Got midi message, offset " + offset + " count " + count)
+            Log.d(TAG, "Byte 0 " + Integer.toHexString(data!![offset].toInt()))
+            Log.d(TAG, "Byte 1 " + Integer.toHexString(data[offset+1].toInt()))
+            Log.d(TAG, "Byte 2 " + data[offset+2].toInt())
+
+            val CONTROL_CHANGE_CH1 : Byte = 0xB0.toByte()
+
+            if (data[offset] == CONTROL_CHANGE_CH1){
+                // TODO: Wrap this in a countdown timer
+                NativeInterface.passMIDIvalue(data[offset+2].toInt() / 127.0F)
+            }
+        }
+
+    }
+
 }
+

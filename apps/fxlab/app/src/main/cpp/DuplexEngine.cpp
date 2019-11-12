@@ -15,7 +15,6 @@
  */
 
 #include "DuplexEngine.h"
-//#include "effects/Effects.h"
 #include "effects/EchoEffect.h"
 
 DuplexEngine::DuplexEngine() {
@@ -26,18 +25,21 @@ void DuplexEngine::setupStreams() {
 
     openInputStream();
 
+    functionList.addEffect(EchoEffect(0.5, 400));
+
     mCallback = std::make_unique<DuplexCallback>(
             inputStream,
-            [](float *begin, float *end){},
+            [this](float *begin, float *end){
+                this->functionList(begin, end);
+                },
             inputStream->getBufferCapacityInFrames());
 
     openOutputStream();
     startStreams();
-
 }
 
-
 oboe::AudioStreamBuilder DuplexEngine::defaultBuilder() {
+
     return *oboe::AudioStreamBuilder()
             .setPerformanceMode(oboe::PerformanceMode::LowLatency)
             ->setSharingMode(oboe::SharingMode::Exclusive)

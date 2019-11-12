@@ -51,14 +51,14 @@ JNIEXPORT void JNICALL
 Java_com_mobileer_androidfxlab_NativeInterface_enablePassthroughNative(
         JNIEnv *, jobject, jboolean jenable) {
     if (!enginePtr) return;
-    enginePtr->functionList.mute(!static_cast<bool>(jenable));
+    //enginePtr->functionList.mute(!static_cast<bool>(jenable));
 }
 
 JNIEXPORT void JNICALL
 Java_com_mobileer_androidfxlab_NativeInterface_passMIDIvalue(
         JNIEnv *, jobject, jfloat value) {
     if (!enginePtr) return;
-    enginePtr->functionList.modifyEffectAt(0, EchoEffect<float *>(0.5, 100 + (value * 400)));
+    enginePtr->functionList.modifyEffectAt(0, EchoEffect(0.5, 100 + (value * 400)));
 }
 
 } //extern C
