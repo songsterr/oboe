@@ -24,11 +24,10 @@ class DuplexCallback : public oboe::AudioStreamCallback {
 public:
 
     DuplexCallback(oboe::ManagedStream &inputStream,
-                   std::function<void(float *, float *)> processingFunction,
-                   size_t bufferSize) :
-            kBufferSize(bufferSize),
+                   std::function<void(float *, float *)> processingFunction) :
             mInputStream(inputStream),
-            mProcessingFunction(processingFunction) {}
+            mProcessingFunction(processingFunction),
+            kBufferSize((size_t)inputStream->getBufferCapacityInFrames()){}
 
     oboe::DataCallbackResult
     onAudioReady(oboe::AudioStream *, void *audioData, int32_t numFrames) override {
