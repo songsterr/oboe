@@ -37,6 +37,8 @@ import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.mobileer.androidfxlab.databinding.ActivityMainBinding
 import java.lang.annotation.Native
+import java.util.*
+import kotlin.concurrent.timerTask
 
 
 class MainActivity : AppCompatActivity() {
@@ -131,6 +133,8 @@ class MainActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.M)
     class MyMidiReceiver : MidiReceiver() {
         private val TAG: String = "MyMidiReceiver"
+        private val TIMEOUT_MS: Long = 100
+        private var timer: Timer? = null
 
         override fun onSend(data: ByteArray?, offset: Int, count: Int, timestamp: Long) {
 
@@ -142,12 +146,15 @@ class MainActivity : AppCompatActivity() {
             val CONTROL_CHANGE_CH1 : Byte = 0xB0.toByte()
 
             if (data[offset] == CONTROL_CHANGE_CH1){
-                // TODO: Wrap this in a countdown timer
-                NativeInterface.passMIDIvalue(data[offset+2].toInt() / 127.0F)
+                sendMidiValue(data[offset+2].toInt() / 127.0F);
             }
         }
 
+        private fun sendMidiValue(value: Float) {
+            timer?.cancel()
+            timer = Timer()
+            timer?.schedule(timerTask { NativeInterface.passMIDIvalue(value) }, TIMEOUT_MS)
+        }
     }
-
 }
 
