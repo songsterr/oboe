@@ -27,7 +27,8 @@ public:
                    std::function<void(float *, float *)> processingFunction) :
             mInputStream(inputStream),
             mProcessingFunction(processingFunction),
-            kBufferSize((size_t)inputStream->getBufferCapacityInFrames()){}
+            mProcessingBuffer(
+                    std::make_unique<float[]>(inputStream->getBufferCapacityInFrames())){}
 
     oboe::DataCallbackResult
     onAudioReady(oboe::AudioStream *, void *audioData, int32_t numFrames) override {
@@ -38,11 +39,9 @@ public:
 
 private:
     int mSpinUpCallbacks = 10; // We will let the streams sync for the first few valid frames
-    const size_t kBufferSize;
     oboe::ManagedStream &mInputStream;
     std::function<void(float *, float *)> mProcessingFunction;
-    std::unique_ptr<float[]> mInputBuffer = std::make_unique<float[]>(kBufferSize);
-
+    std::unique_ptr<float[]> mProcessingBuffer;
 
 };
 #endif //ANDROID_FXLAB_DUPLEXCALLBACK_H
