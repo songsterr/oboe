@@ -337,9 +337,9 @@ public:
      * @return a ResultWithValue which has a result of Result::OK and a value containing the number
      * of frames actually read, or result of Result::Error*.
      */
-    virtual ResultWithValue<int32_t> read(void* /* buffer */,
-                            int32_t /* numFrames */,
-                            int64_t /* timeoutNanoseconds */) {
+    virtual ResultWithValue<int32_t> read(void* buffer,
+                            int32_t numFrames ,
+                            int64_t timeoutNanoseconds) {
         return ResultWithValue<int32_t>(Result::ErrorUnimplemented);
     }
 
