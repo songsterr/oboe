@@ -45,8 +45,7 @@ void _distortion (floating &x) {
     x = std::copysign(-std::expm1(-std::abs(x)), x);
 }
 
-template <class iter_type>
-void distortion(iter_type beg, iter_type end) {
+void distortion(float *beg, float *end) {
     for (; beg != end; ++beg) {
         _distortion(*beg);
     }

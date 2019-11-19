@@ -18,12 +18,11 @@
 
 #include "DelayLineEffect.h"
 
-template<class iter_type>
-class FlangerEffect : public DelayLineEffect<iter_type> {
+class FlangerEffect : public DelayLineEffect<float *> {
 public:
     // feedback should be 0.7071
     FlangerEffect(float depth_ms, float frequency, float feedback):
-        DelayLineEffect<iter_type>(feedback, feedback, feedback, 0, depth_ms * SAMPLE_RATE / 1000,
+        DelayLineEffect<float *>(feedback, feedback, feedback, 0, depth_ms * SAMPLE_RATE / 1000,
                 SineWave {frequency, 1, SAMPLE_RATE})  { }
 };
 #endif //ANDROID_FXLAB_FLANGEREFFECT_H

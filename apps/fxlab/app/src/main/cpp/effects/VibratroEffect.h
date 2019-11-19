@@ -17,11 +17,11 @@
 #define ANDROID_FXLAB_VIBRATROEFFECT_H
 
 #include "DelayLineEffect.h"
-template <class iter_type>
-class VibratoEffect : public DelayLineEffect<iter_type> {
+
+class VibratoEffect : public DelayLineEffect<float *> {
 public:
     VibratoEffect(float depth_ms, float frequency):
-        DelayLineEffect<iter_type>(0, 1, 0, 1, depth_ms * SAMPLE_RATE / 1000,
+        DelayLineEffect<float *>(0, 1, 0, 1, depth_ms * SAMPLE_RATE / 1000,
                 SineWave {frequency, 1, SAMPLE_RATE}) { }
 };
 #endif //ANDROID_FXLAB_VIBRATROEFFECT_H
