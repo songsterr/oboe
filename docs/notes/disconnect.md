@@ -19,7 +19,7 @@ An app may choose to reopen a stream in the onErrorAfterClose() method.
 The app should then stop() and close() the stream.
 An app may then choose to reopen a stream.
 
-## Workaround for not Disconnecting Properly
+## Workaround for not Disconnecting Properly - [Considered Obsolete]
 
 On some versions of Android the disconnect message does not reach AAudio and the app will not
 know that the device has changed. There is a "Test Disconnects" option in
@@ -50,5 +50,11 @@ You can register for the Intent when your app resumes and unregister when it pau
     @Override
     public void onPause() {
         this.unregisterReceiver(mPluginReceiver);
-        super.onPause();
+        super.onPause();he 
     }
+
+## Preferred Workaround for not Disconnecting Properly
+
+Since API level 23, The Android AudioManager has provided a call back mechanism for audio device connect/disconnect events through the registerAudioDeviceCallback (AudioDeviceCallback callback, Handler handler) method and AudioDeviceCallback (abstract) claass.
+
+See the DrumThumper sample for an example implementation of this fallback mechanism.
